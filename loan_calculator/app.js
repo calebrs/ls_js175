@@ -55,22 +55,43 @@ function getParams(path) {
   return myURL.searchParams;
 }
 
-function calulateLoan(params) {
-  let result = '';
-  let amount = params.get('amount');
-  let duration = params.get('duration');
-  
-  result += `<tr><th>Amount</th><td>$${amount}</td></tr>`;
-  result += `<tr><th>Duration</th><td>${duration} years</td></tr>`;
-
+function getMonthlyPayment(duration, amount) {
   let monthlyInterestRate = .00416;
   let months = duration * 12;
-  let monthlyPayment = amount * 
+  return monthlyPayment = amount * 
                        (monthlyInterestRate / 
                        (1 - Math.pow((1 + monthlyInterestRate),(-months))));
+}
 
-  result += `<tr><th>APR</th><td>5%</td></tr>`;
-  result += `<tr><th>Monthly Payment</th><td>$${monthlyPayment.toFixed(2)}</td></tr>`
+function calulateLoan(params) {
+  let result = '';
+  let amount = Number(params.get('amount'));
+  let duration = Number(params.get('duration'));
+  let monthlyPayment = getMonthlyPayment(duration, amount);
+  
+  result = `<tr>
+               <th>Amount</th>
+               <td><a href='/?amount=${amount - 100}&duration=${duration}'>- $100</a></td>
+               <td>$${amount}</td>
+               <td><a href='/?amount=${amount + 100}&duration=${duration}'>+ $100</a></td>
+             </tr>
+
+             <tr>
+              <th>Duration</th>
+              <td><a href='/?amount=${amount}&duration=${duration - 1}'>- 1 year</a></td>
+              <td>${duration} years</td>
+              <td><a href='/?amount=${amount}&duration=${duration + 1}'>+ 1 year</a></td>
+             </tr>
+
+             <tr>
+               <th>APR</th>
+               <td colspan='3'>5%</td>
+             </tr>
+
+             <tr>
+               <th>Monthly Payment</th>
+               <td colspan='3'>$${monthlyPayment.toFixed(2)}</td>
+             </tr>`
 
   return HTML_START + result + HTML_END;
 }
