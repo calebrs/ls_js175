@@ -2,8 +2,9 @@ const HTTP = require('http');
 const PORT = 3000;
 const URL = require('url').URL;
 const HANDLEBARS = require('handlebars');
+const APR = 5;
 
-const SOURCE = `
+const LOAN_OFFER_SOURCE = `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -45,21 +46,21 @@ const SOURCE = `
           <tr>
             <th>Amount</th>
             <td>
-              <a href='/?amount={{amountDecrement}}&duration={{duration}}'>- $100</a>
+              <a href='/loan-offer?amount={{amountDecrement}}&duration={{duration}}'>- $100</a>
             </td>
             <td>{{amount}}</td>
             <td>
-              <a href='/?amount={{amountIncrement}}&duration={{duration}}'>+ $100</a>
+              <a href='/loan-offer?amount={{amountIncrement}}&duration={{duration}}'>+ $100</a>
             </td>
           </tr>
           <tr>
             <th>Duration</th>
             <td>
-              <a href='/?amount={{amount}}&duration={{durationDecrement}}'>- 1 year</a>
+              <a href='/loan-offer?amount={{amount}}&duration={{durationDecrement}}'>- 1 year</a>
             </td>
             <td>{{duration}} years</td>
             <td>
-              <a href='/?amount={{amount}}&duration={{durationIncrement}}'>+ 1 year</a>
+              <a href='/loan-offer?amount={{amount}}&duration={{durationIncrement}}'>+ 1 year</a>
             </td>
           </tr>
           <tr>
@@ -77,7 +78,74 @@ const SOURCE = `
 </html>
 `;
 
-const LOAN_OFFER_TEMPLATE = HANDLEBARS.compile(SOURCE);
+const LOAN_FORM_SOURCE = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Loan Calculator</title>
+    <style type="text/css">
+      body {
+        background: rgba(250, 250, 250);
+        font-family: sans-serif;
+        color: rgb(50, 50, 50);
+      }
+
+      article {
+        width: 100%;
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 1rem 2rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        text-align: center;
+      }
+
+      form,
+      input {
+        font-size: 1.5rem;
+      }
+      form p {
+        text-align: center;
+      }
+      label,
+      input {
+        display: block;
+        width: 100%;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      input[type="submit"] {
+        width: auto;
+        margin: 1rem auto;
+        cursor: pointer;
+        color: #fff;
+        background-color: #01d28e;
+        border: none;
+        border-radius: 0.3rem;
+      }
+    </style>
+  </head>
+  <body>
+    <article>
+      <h1>Loan Calculator</h1>
+      <form action="/loan-offer" method="get">
+        <p>All loans are offered at an APR of {{apr}}%.</p>
+        <label for="amount">How much do you want to borrow (in dollars)?</label>
+        <input type="number" name="amount" value="">
+        <label for="amount">How much time do you want to pay back your loan?</label>
+        <input type="number" name="duration" value="">
+        <input type="submit" name="" value="Get loan offer!">
+      </form>
+    </article>
+  </body>
+</html>
+`;
+
+
+const LOAN_OFFER_TEMPLATE = HANDLEBARS.compile(LOAN_OFFER_SOURCE);
+const LOAN_FORM_TEMPLATE = HANDLEBARS.compile(LOAN_FORM_SOURCE);
 
 function render(template, data) {
   let html = template(data);
@@ -87,6 +155,11 @@ function render(template, data) {
 function getParams(path) {
   const myURL = new URL(path, `http://localhost:${PORT}`);
   return myURL.searchParams;
+}
+
+function getPathname(path) {
+  const myURL = new URL(path, `http://localhost:${PORT}`);
+  return myURL.pathname;
 }
 
 function getMonthlyPayment(duration, amount) {
@@ -114,18 +187,27 @@ function calulateLoan(params) {
 }
 
 const SERVER = HTTP.createServer((req, res) => {
+  let method = req.method;
   let path = req.url;
+  let pathname = getPathname(path);
 
-  if (path === '/favicon.ico') {
-    res.statusCode = 404;
+  if (path === '/') {
+    let content = render(LOAN_FORM_TEMPLATE, {apr: APR});
+
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html');
+    res.write(`${content}\n`);
     res.end();
-  } else {
+  } else if (pathname === '/loan-offer') {
     let data = calulateLoan(getParams(path));
     let content = render(LOAN_OFFER_TEMPLATE, data);
 
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html');
     res.write(content);
+    res.end();
+  } else {
+    res.statusCode = 404;
     res.end();
   }
 });
