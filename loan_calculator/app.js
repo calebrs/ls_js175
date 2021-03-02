@@ -1,8 +1,18 @@
 const HTTP = require('http');
-const PORT = 3000;
 const URL = require('url').URL;
+const PATH = require('path');
+const FS = require('fs');
+const PORT = 3000;
 const HANDLEBARS = require('handlebars');
 const APR = 5;
+const MIME_TYPES = {
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+  '.jpg': 'image/jpeg',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon'
+}
+
 
 const LOAN_OFFER_SOURCE = `
 <!DOCTYPE html>
@@ -10,33 +20,7 @@ const LOAN_OFFER_SOURCE = `
   <head>
     <meta charset="utf-8">
     <title>Loan Calculator</title>
-    <style type="text/css">
-      body {
-        background: rgba(250, 250, 250);
-        font-family: sans-serif;
-        color: rgb(50, 50, 50);
-      }
-
-      article {
-        width: 100%;
-        max-width: 40rem;
-        margin: 0 auto;
-        padding: 1rem 2rem;
-      }
-
-      h1 {
-        font-size: 2.5rem;
-        text-align: center;
-      }
-
-      table {
-        font-size: 2rem;
-      }
-
-      th {
-        text-align: right;
-      }
-    </style>
+    <link rel="stylesheet" href="/assets/css/styles.css">
   </head>
   <body>
     <article>
@@ -83,49 +67,7 @@ const LOAN_FORM_SOURCE = `<!DOCTYPE html>
   <head>
     <meta charset="utf-8">
     <title>Loan Calculator</title>
-    <style type="text/css">
-      body {
-        background: rgba(250, 250, 250);
-        font-family: sans-serif;
-        color: rgb(50, 50, 50);
-      }
-
-      article {
-        width: 100%;
-        max-width: 40rem;
-        margin: 0 auto;
-        padding: 1rem 2rem;
-      }
-
-      h1 {
-        font-size: 2.5rem;
-        text-align: center;
-      }
-
-      form,
-      input {
-        font-size: 1.5rem;
-      }
-      form p {
-        text-align: center;
-      }
-      label,
-      input {
-        display: block;
-        width: 100%;
-        padding: 0.5rem;
-        margin-top: 0.5rem;
-      }
-      input[type="submit"] {
-        width: auto;
-        margin: 1rem auto;
-        cursor: pointer;
-        color: #fff;
-        background-color: #01d28e;
-        border: none;
-        border-radius: 0.3rem;
-      }
-    </style>
+    <link rel="stylesheet" href="/assets/css/styles.css">
   </head>
   <body>
     <article>
@@ -190,26 +132,36 @@ const SERVER = HTTP.createServer((req, res) => {
   let method = req.method;
   let path = req.url;
   let pathname = getPathname(path);
+  let fileExtension = PATH.extname(pathname);
 
-  if (path === '/') {
-    let content = render(LOAN_FORM_TEMPLATE, {apr: APR});
-
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/html');
-    res.write(`${content}\n`);
-    res.end();
-  } else if (pathname === '/loan-offer') {
-    let data = calulateLoan(getParams(path));
-    let content = render(LOAN_OFFER_TEMPLATE, data);
-
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/html');
-    res.write(content);
-    res.end();
-  } else {
-    res.statusCode = 404;
-    res.end();
-  }
+  FS.readFile(`./public/${pathname}`, (err, data) => {
+    if (data) {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', `${MIME_TYPES[fileExtension]}`);
+      res.write(`${data}\n`);
+      res.end();
+    } else {
+      if (path === '/') {
+        let content = render(LOAN_FORM_TEMPLATE, {apr: APR});
+    
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/html');
+        res.write(`${content}\n`);
+        res.end();
+      } else if (pathname === '/loan-offer') {
+        let data = calulateLoan(getParams(path));
+        let content = render(LOAN_OFFER_TEMPLATE, data);
+    
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/html');
+        res.write(content);
+        res.end();
+      } else {
+        res.statusCode = 404;
+        res.end();
+      }
+    }
+  });
 });
 
 SERVER.listen(PORT, () => {
