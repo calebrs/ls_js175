@@ -144,6 +144,37 @@ function calulateLoan(data) {
   return data;
 }
 
+function getIndex(res) {
+  let content = render(LOAN_FORM_TEMPLATE, {apr: APR});
+    
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/html');
+        res.write(`${content}\n`);
+        res.end();
+}
+
+function getLoanOffer(res, path) {
+  let data = calulateLoan(getParams(path));
+        let content = render(LOAN_OFFER_TEMPLATE, data);
+    
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/html');
+        res.write(`${content}\n`);
+        res.end();
+}
+
+function postLoanOffer(req, res) {
+  parseFormData(req, parsedData => {
+    let data = calulateLoan(parsedData);
+    let content = render(LOAN_OFFER_TEMPLATE, data);
+
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html');
+    res.write(`${content}\n`);
+    res.end();
+  });
+}
+
 const SERVER = HTTP.createServer((req, res) => {
   let method = req.method;
   let path = req.url;
@@ -158,30 +189,11 @@ const SERVER = HTTP.createServer((req, res) => {
       res.end();
     } else {
       if (method === 'GET' && path === '/') {
-        let content = render(LOAN_FORM_TEMPLATE, {apr: APR});
-    
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/html');
-        res.write(`${content}\n`);
-        res.end();
+        getIndex(res);
       } else if (method === 'GET' && pathname === '/loan-offer') {
-        let data = calulateLoan(getParams(path));
-        let content = render(LOAN_OFFER_TEMPLATE, data);
-    
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/html');
-        res.write(`${content}\n`);
-        res.end();
+        getLoanOffer(res, path);
       } else if (method === 'POST' && pathname === '/loan-offer') {
-        parseFormData(req, parsedData => {
-          let data = calulateLoan(parsedData);
-          let content = render(LOAN_OFFER_TEMPLATE, data);
-
-          res.statusCode = 200;
-          res.setHeader('Content-Type', 'text/html');
-          res.write(`${content}\n`);
-          res.end();
-        });
+        postLoanOffer(req, res);
       } else {
         res.statusCode = 404;
         res.end();
