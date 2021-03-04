@@ -1,10 +1,12 @@
 const express = require("express");
+const morgan = require("morgan");
 const app = express();
 
 app.set("views", "./views");
 app.set("view engine", "pug");
 
 app.use(express.static("public"));
+app.use(morgan("common"));
 
 app.get("/", (req, res) => {
   res.redirect("/english");
@@ -26,6 +28,6 @@ app.get("/spanish", (req, res) => {
   res.render("hello-world-spanish");
 });
 
-app.listen(3001, "localhost", () => {
-  console.log("Listening to port 3001.");
+app.listen(3000, "localhost", () => {
+  console.log("Listening to port 3000.");
 });
