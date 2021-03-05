@@ -43,7 +43,7 @@ app.use(morgan("common")); //allows use of the middleware morgan. SEE middleware
 
 app.locals.currentPathClass = (path, currentPath) => { //defines a new method currentPathClass on the app.locals object. This method will be called in the layout.pug
   return path === currentPath ? "current" : "";        //compares a path to the current path. if they are the same, it makes the current path the current loaded page.
-}
+}                                                      //considered a helper method
 
 app.get("/", (req, res) => { //redirects a blank request to the page to the english site
   res.redirect("/english");
